@@ -127,6 +127,35 @@ Leaving a Program Details or Common Daily Plan field blank when generating
 a plan never erases what was saved before — it's treated as "no change",
 not "delete this".
 
+## Bulk-Adding Existing Clients
+
+If there are already clients being tracked outside this app (e.g. from
+before it existed), add them straight into the Google Sheet instead of
+typing each one through the phone form:
+
+1. Make sure `initializeDatabase` has been run at least once, so the
+   **Clients** tab already has all its column headers in row 1.
+2. Open the Google Sheet, go to the **Clients** tab.
+3. Starting at row 2 (or the next empty row), type one client per row,
+   filling in whatever is known:
+   - `Name`, `Age`, `Phone`, `Notes`
+   - `Goal`, `DietType`, `ProgramStartDate` (format `YYYY-MM-DD`, e.g.
+     `2026-05-10`), `ProgramStartWeight` (just the number, e.g. `95`)
+   - `OnRising`, `BeforeExercise`, `AfterExercise`, `Brunch`, `Snack`,
+     `BedTime` — optional; can also be filled in later from the app
+   - **Leave `ClientID`, `CreatedAt`, and `UpdatedAt` blank.**
+4. Once all rows are typed, open the Apps Script editor, select
+   `fillMissingClientIds` from the function dropdown, and click **Run**.
+   This assigns a unique ID and timestamp to every row that has a Name but
+   no ID — it never touches a row that already has one.
+5. Reload the web app — every client just added now appears in the
+   dropdown, with their Program Details and Common Daily Plan already
+   pre-filled for the next PDF generated for them.
+
+This only backfills the client list itself, not historical week-by-week
+PDFs — there's nothing to backfill there since those earlier weeks' plans
+were never generated through this app.
+
 ## Security
 
 - Deploy with **Execute as: Me** and **Who has access: Anyone with Google

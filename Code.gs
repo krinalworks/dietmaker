@@ -136,6 +136,40 @@ function initializeDatabase() {
   return 'Database initialized.';
 }
 
+/**
+ * One-time helper for bulk-adding existing clients: type their details
+ * straight into the Clients sheet (skip the ClientID/CreatedAt/UpdatedAt
+ * columns), then run this once from the Apps Script editor. It fills in a
+ * unique ID and timestamp for every row that has a Name but no ClientID.
+ * Safe to run repeatedly — it only fills blanks, never touches existing data.
+ */
+function fillMissingClientIds() {
+  const ss = getSpreadsheet_();
+  const sheet = getOrCreateSheet_(ss, SHEET_CLIENTS, CLIENTS_HEADERS);
+  const data = getRows_(sheet);
+  const h = data.header;
+  const idIdx = h.indexOf('ClientID');
+  const nameIdx = h.indexOf('Name');
+  const createdIdx = h.indexOf('CreatedAt');
+  const updatedIdx = h.indexOf('UpdatedAt');
+  const now = nowString_();
+
+  let filled = 0;
+  data.rows.forEach(function (row, i) {
+    const rowNum = i + 2; // +1 for header row, +1 for 1-indexing
+    const hasName = row[nameIdx] && String(row[nameIdx]).trim();
+    if (!hasName) return; // skip fully blank rows
+    if (!row[idIdx]) {
+      sheet.getRange(rowNum, idIdx + 1).setValue(Utilities.getUuid());
+      filled++;
+    }
+    if (!row[createdIdx]) sheet.getRange(rowNum, createdIdx + 1).setValue(now);
+    if (!row[updatedIdx]) sheet.getRange(rowNum, updatedIdx + 1).setValue(now);
+  });
+
+  return 'Done. Filled in IDs/timestamps for ' + filled + ' client row(s).';
+}
+
 function getSpreadsheet_() {
   if (CONFIG.SPREADSHEET_ID) {
     return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
