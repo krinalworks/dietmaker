@@ -3,17 +3,53 @@
 A mobile web app that lets a dietician create professionally formatted diet
 plan PDFs from her phone — no laptop, no Google Docs, no typing help needed.
 
+The PDF layout matches an existing branded diet plan format (cover page,
+common daily plan, lunch/dinner tables, diet guidelines, weekly progress
+tracker, coach contact page) rather than a generic template.
+
 ## What This App Does
 
 1. Open one link on your phone.
 2. Select an existing client, or add a new one.
-3. Enter the week number and start date (end date auto-fills to +6 days).
-4. Fill in lunch and dinner for Day 1 through Day 7.
-5. Tap **Generate PDF**.
-6. Get a PDF link — open it or share it on WhatsApp.
+3. Review/fill **Program Details** (Goal, Diet Type, Program Start Date &
+   Weight) and the **Common Daily Plan** (On Rising, Before Exercise, After
+   Exercise, Brunch, Snack, Bed Time) — these are the same every week, so
+   they're pre-filled from last time and you only touch them if something
+   changed.
+4. Enter this week's number and start date (end date auto-fills to +6 days).
+5. Fill in lunch and dinner for Day 1 through Day 7.
+6. Tap **Generate PDF**.
+7. Get a PDF link — open it or share it on WhatsApp.
 
 Every client and every generated plan is saved automatically, so past plans
 can be reopened later from the "Recent Plans" list.
+
+## PDF Structure
+
+Each generated PDF has these pages, matching the dietician's existing
+format:
+
+1. **Cover** — title, week number, client name, start/end date, starting
+   weight, goal, diet type, an optional highlight banner (e.g. "45 Minutes
+   Fast Walk is Compulsion Every Day"), and the coach's name/contact.
+2. **Common Daily Plan** — the fixed daily routine (On Rising, Before
+   Exercise, After Exercise, Brunch, Snack, Bed Time) plus a hydration note.
+3. **Lunch Plan** — Day 1–7 lunch table.
+4. **Dinner Plan** — Day 1–7 dinner table, a dinner-timing note, and this
+   week's optional note if one was entered.
+5. **Diet Guidelines** — Do's/Don'ts and lifestyle tips. This content is the
+   same for every client, so it lives in `Code.gs` (`DOS_LIST`,
+   `DONTS_LIST`, `LIFESTYLE_TIPS`) rather than being re-typed every week.
+6. **Weekly Progress Tracker** — a blank 8-week weigh-in grid for the client
+   to fill in by hand, with the program's start date/weight/goal at the top.
+7. **Coach contact page** — dietician bio, referral note, and other
+   programs, all pulled from `CONFIG` (see below). Instagram/Website/Other
+   Programs are only shown if you actually fill them in — no more
+   unfilled-looking `{{placeholder}}` text.
+
+**Not included on purpose:** the client photo box from the original
+template is skipped — there's no photo upload step in this app, and it was
+never filled in the reference file either.
 
 ## How This Differs From a Template-Based Approach
 
@@ -21,9 +57,11 @@ Instead of copying a Google Doc template and replacing `{{PLACEHOLDERS}}`,
 the PDF is built directly in code (using Google Docs' `DocumentApp` API).
 There is no template document to create or maintain, and no risk of
 placeholders silently failing to match because of Google Docs text styling
-quirks. If you want to change how the PDF looks, edit the
-`createPdfFromScratch_()` function in `Code.gs` — everything about the
-layout (title, tables, colors, notes) is defined there in one place.
+quirks — which is exactly the issue visible in the reference PDF's last
+page (`{{Instagram_Handle}}`, `{{Program_1}}` etc. left unrendered). If you
+want to change how the PDF looks, edit `createDietPlanPdf_()` and the
+`build*Page_()` functions in `Code.gs` — everything about the layout
+(colors, section order, tables) is defined there in one place.
 
 ## Cost
 
@@ -49,10 +87,19 @@ README.md         This file
 5. Replace the manifest: click the gear icon → show `appsscript.json` in
    the editor (Project Settings → "Show appsscript.json manifest file in
    editor"), then paste in this project's `appsscript.json`.
-6. (Optional) In `Code.gs`, edit the `CONFIG` object at the top:
+6. In `Code.gs`, edit the `CONFIG` object at the top to match the
+   dietician's brand:
    - `OUTPUT_FOLDER_ID` — paste a Google Drive folder ID to keep generated
      PDFs organized. Leave blank to save them in the root of Drive.
-   - `CLINIC_NAME` — the title printed at the top of every PDF.
+   - `DOC_TITLE`, `DOC_TAGLINE`, `DEFAULT_HIGHLIGHT` — cover page text.
+   - `LUNCH_TIME_LABEL`, `DINNER_TIME_LABEL` — meal timing shown on those
+     pages.
+   - `HYDRATION_NOTE`, `DINNER_NOTE`, `MOTIVATIONAL_QUOTE` — static notes.
+   - `DIETICIAN_NAME`, `CREDENTIALS`, `PHONE`, `EMAIL`, `INSTAGRAM_HANDLE`,
+     `WEBSITE`, `REFERRAL_TEXT`, `OTHER_PROGRAMS` — coach bio/contact page.
+     Leave `INSTAGRAM_HANDLE`/`WEBSITE` blank to omit them entirely.
+   - `DOS_LIST`, `DONTS_LIST`, `LIFESTYLE_TIPS` (just below `CONFIG`) — the
+     Diet Guidelines page content.
 7. In the Apps Script editor, select the `initializeDatabase` function from
    the function dropdown and click **Run**. Approve the permission prompts.
    This creates the `Clients`, `DietPlans`, and `FoodLibrary` sheet tabs.
@@ -68,10 +115,17 @@ existing rows and never duplicates the header row.
 
 ## Where Data Lives
 
-- **Clients** and **DietPlans** tabs in the Google Sheet you created — this
-  is the permanent record of every client and every plan generated.
+- **Clients** tab — one row per client: identity (Name, Age, Phone, Notes)
+  plus their latest Program Details and Common Daily Plan, which
+  auto-prefill the form the next time a plan is generated for them.
+- **DietPlans** tab — one row per generated plan, snapshotting the client's
+  profile at that time plus that week's dates and meals.
 - **Generated PDFs** are saved as files in Google Drive (in
   `OUTPUT_FOLDER_ID` if set, otherwise the root of My Drive).
+
+Leaving a Program Details or Common Daily Plan field blank when generating
+a plan never erases what was saved before — it's treated as "no change",
+not "delete this".
 
 ## Security
 
@@ -88,26 +142,33 @@ existing rows and never duplicates the header row.
 
 ## Customizing the PDF Layout
 
-All PDF formatting lives in `createPdfFromScratch_()` and its two helper
-functions (`styleInfoTable_`, `styleMealsTable_`) in `Code.gs`. Common
-tweaks:
+All PDF formatting lives in `createDietPlanPdf_()` and the `build*Page_()`
+functions in `Code.gs`, plus the shared helpers below them
+(`appendSectionHeader_`, `appendLabelValueTable_`, `appendDayMealTable_`,
+`appendNoteBox_`). Common tweaks:
 
-- **Clinic name / title** — `CONFIG.CLINIC_NAME` at the top of `Code.gs`.
-- **Colors** — the hex codes passed to `setBackgroundColor` /
-  `setForegroundColor` in `styleMealsTable_`.
-- **Extra fields** (e.g. breakfast) — add a column to `PLANS_HEADERS`, a
-  field in the frontend, and a row/column in the meals table in
-  `createPdfFromScratch_()`.
+- **Cover page text / colors** — `CONFIG` values and the `DARK_GREEN` /
+  `GOLD` / `LIGHT_GREEN` color constants near the top of `Code.gs`.
+- **Diet Guidelines content** — edit `DOS_LIST`, `DONTS_LIST`, or
+  `LIFESTYLE_TIPS` directly.
+- **Extra fields** (e.g. a breakfast slot) — add a column to
+  `PLANS_HEADERS`/`CLIENTS_HEADERS`, a field in the frontend, and a row in
+  the relevant `build*Page_()` function.
 
 ## Testing Checklist
 
 - [ ] `initializeDatabase()` runs without errors.
-- [ ] Add a new client, generate a plan, refresh the app, confirm the
-      client now appears in the dropdown.
+- [ ] Add a new client, fill Program Details + Common Daily Plan, generate
+      a plan, refresh the app, confirm the client appears in the dropdown
+      with those fields pre-filled.
 - [ ] Start date selection auto-fills end date to +6 days.
 - [ ] Fill Day 1–2 meals only, generate PDF, confirm Days 3–7 show `-`
       (not blank placeholders) and Days 1–2 show the correct text.
-- [ ] Generated PDF opens from the returned link.
+- [ ] Leave a Program Details field blank on a second generation for the
+      same client — confirm the previously saved value is kept, not erased.
+- [ ] Generated PDF opens from the returned link and all 7 pages look
+      correct (cover, common daily, lunch, dinner, guidelines, tracker,
+      contact).
 - [ ] PDF is saved in the correct Drive folder.
 - [ ] "Recent Plans" shows the plan just generated when the same client is
       reselected.
@@ -129,15 +190,17 @@ tweaks:
 ## What's Intentionally Not Included (MVP scope)
 
 Login system, payment system, client-facing portal, AI-generated diet
-content, WhatsApp API automation, and multi-user admin dashboards are all
-out of scope for this MVP by design. The goal is: one dietician can
-generate and share one complete diet plan PDF from her phone without
-needing anyone else's help.
+content, WhatsApp API automation, client photo upload, and multi-user admin
+dashboards are all out of scope for this MVP by design. The goal is: one
+dietician can generate and share one complete diet plan PDF from her phone
+without needing anyone else's help.
 
 ## Possible Next Steps (not built yet)
 
-- "Copy previous week" button to prefill a new week from the client's last
-  plan.
-- Edit existing client details.
-- Food library autosuggest for meal textareas.
+- "Copy previous week" button to prefill this week's meals from the
+  client's last plan (Program Details/Common Daily Plan already do this
+  automatically — this would extend it to Day 1–7 meals too).
+- A dedicated "Edit client" screen (profile fields are currently only
+  editable via the plan-generation form).
+- Food library autosuggest for meal fields.
 - A generated WhatsApp share message (text only, not automated sending).

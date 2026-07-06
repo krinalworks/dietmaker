@@ -189,7 +189,45 @@
       </section>
 
       <section class="card">
-        <h2>Plan Details</h2>
+        <h2>Program Details</h2>
+        <p class="hint">Filled in once per client — carries forward automatically to future weeks, edit only if it changes.</p>
+        <label for="goal">Goal</label>
+        <input id="goal" type="text" placeholder="e.g. Fat Loss & Weight Management">
+
+        <label for="dietType">Diet Type</label>
+        <input id="dietType" type="text" placeholder="e.g. Vegetarian">
+
+        <label for="programStartDate">Program Start Date</label>
+        <input id="programStartDate" type="date">
+
+        <label for="programStartWeight">Starting Weight (kg)</label>
+        <input id="programStartWeight" type="text" inputmode="decimal" placeholder="e.g. 95">
+      </section>
+
+      <section class="card">
+        <h2>Common Daily Plan</h2>
+        <p class="hint">Same every day of the week — also carries forward automatically.</p>
+        <label for="onRising">On Rising</label>
+        <input id="onRising" type="text" placeholder="e.g. Flax seeds powder with water">
+
+        <label for="beforeExercise">Before Exercise</label>
+        <input id="beforeExercise" type="text" placeholder="e.g. 5 Almond 2 Walnut">
+
+        <label for="afterExercise">After Exercise</label>
+        <input id="afterExercise" type="text" placeholder="e.g. Protein powder">
+
+        <label for="brunch">Brunch</label>
+        <input id="brunch" type="text" placeholder="e.g. Isabgol with water">
+
+        <label for="snack">Snack</label>
+        <input id="snack" type="text" placeholder="e.g. Green tea + pumpkin seeds">
+
+        <label for="bedTime">Bed Time</label>
+        <input id="bedTime" type="text" placeholder="e.g. Cinnamon tea">
+      </section>
+
+      <section class="card">
+        <h2>This Week</h2>
         <label for="weekNo">Week Number</label>
         <input id="weekNo" type="number" inputmode="numeric" min="1" placeholder="e.g. 1">
 
@@ -199,6 +237,9 @@
         <label for="endDate">End Date</label>
         <input id="endDate" type="date">
         <p class="hint">End date auto-fills to 6 days after the start date — you can still change it.</p>
+
+        <label for="highlightNote">Highlight Banner (optional)</label>
+        <input id="highlightNote" type="text" placeholder="e.g. 45 Minutes Fast Walk is Compulsion Every Day">
       </section>
 
       <section class="card">
@@ -207,8 +248,8 @@
       </section>
 
       <section class="card">
-        <h2>General Notes</h2>
-        <textarea id="generalNotes" rows="3" placeholder="e.g. Drink 3 litres of water daily (optional)"></textarea>
+        <h2>This Week's Note</h2>
+        <textarea id="generalNotes" rows="3" placeholder="Optional extra note shown on the dinner page"></textarea>
       </section>
 
       <div class="actions">
@@ -326,6 +367,8 @@
       select.appendChild(addNew);
     }
 
+    var PROFILE_FIELDS = ['goal', 'dietType', 'programStartDate', 'programStartWeight', 'onRising', 'beforeExercise', 'afterExercise', 'brunch', 'snack', 'bedTime'];
+
     function onClientChange() {
       var value = document.getElementById('clientSelect').value;
       var newFields = document.getElementById('newClientFields');
@@ -334,14 +377,31 @@
       if (value === '__new__') {
         newFields.classList.remove('hidden');
         recentSection.classList.add('hidden');
+        clearProfileFields();
       } else {
         newFields.classList.add('hidden');
         if (value) {
           loadRecentPlans(value);
+          prefillProfileFields(value);
         } else {
           recentSection.classList.add('hidden');
+          clearProfileFields();
         }
       }
+    }
+
+    function prefillProfileFields(clientId) {
+      var client = state.clients.find(function (c) { return c.id === clientId; });
+      if (!client) return;
+      PROFILE_FIELDS.forEach(function (field) {
+        document.getElementById(field).value = client[field] || '';
+      });
+    }
+
+    function clearProfileFields() {
+      PROFILE_FIELDS.forEach(function (field) {
+        document.getElementById(field).value = '';
+      });
     }
 
     function loadRecentPlans(clientId) {
@@ -449,9 +509,20 @@
         newClientAge: clientSelect === '__new__' ? document.getElementById('newClientAge').value : '',
         newClientPhone: clientSelect === '__new__' ? document.getElementById('newClientPhone').value : '',
         newClientNotes: clientSelect === '__new__' ? document.getElementById('newClientNotes').value : '',
+        goal: document.getElementById('goal').value,
+        dietType: document.getElementById('dietType').value,
+        programStartDate: document.getElementById('programStartDate').value,
+        programStartWeight: document.getElementById('programStartWeight').value,
+        onRising: document.getElementById('onRising').value,
+        beforeExercise: document.getElementById('beforeExercise').value,
+        afterExercise: document.getElementById('afterExercise').value,
+        brunch: document.getElementById('brunch').value,
+        snack: document.getElementById('snack').value,
+        bedTime: document.getElementById('bedTime').value,
         weekNo: document.getElementById('weekNo').value,
         startDate: document.getElementById('startDate').value,
         endDate: document.getElementById('endDate').value,
+        highlightNote: document.getElementById('highlightNote').value,
         days: collectDays(),
         generalNotes: document.getElementById('generalNotes').value
       };
@@ -481,10 +552,18 @@
       );
 
       if (result.client && result.client.id) {
-        var alreadyKnown = state.clients.some(function (c) { return c.id === result.client.id; });
-        if (!alreadyKnown) {
-          state.clients.push({ id: result.client.id, name: result.client.name });
+        var profileSnapshot = {};
+        PROFILE_FIELDS.forEach(function (field) {
+          profileSnapshot[field] = document.getElementById(field).value;
+        });
+
+        var existing = state.clients.find(function (c) { return c.id === result.client.id; });
+        if (existing) {
+          Object.assign(existing, profileSnapshot);
+        } else {
+          state.clients.push(Object.assign({ id: result.client.id, name: result.client.name }, profileSnapshot));
         }
+
         populateClientDropdown();
         document.getElementById('clientSelect').value = result.client.id;
         document.getElementById('newClientFields').classList.add('hidden');
