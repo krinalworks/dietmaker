@@ -67,38 +67,37 @@
 
     .hidden { display: none !important; }
 
-    details.day {
+    .day {
       border: 1px solid var(--border);
       border-radius: 10px;
       margin-bottom: 10px;
       overflow: hidden;
     }
-    details.day summary {
-      list-style: none;
+    .day-toggle {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      border: none;
       cursor: pointer;
       padding: 14px 16px;
       font-weight: 600;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
       background: #f8f9fb;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      touch-action: manipulation;
     }
-    details.day summary::-webkit-details-marker { display: none; }
-    details.day summary .chev { color: var(--muted); transition: transform 0.15s; }
-    details.day[open] summary .chev { transform: rotate(90deg); }
-    details.day .day-body { padding: 14px 16px 16px; }
-    details.day summary .filled-dot {
-      width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
-      display: inline-block; margin-left: 8px;
-    }
+    .day-toggle .chev { color: var(--muted); transition: transform 0.15s; }
+    .day.open .day-toggle .chev { transform: rotate(90deg); }
+    .day-body { padding: 14px 16px 16px; }
 
     .actions {
-      position: sticky;
-      bottom: 0;
       display: flex;
       gap: 10px;
-      padding: 12px 0 4px;
-      background: linear-gradient(to top, var(--bg) 70%, transparent);
+      padding: 16px 0 4px;
     }
     .btn {
       flex: 1;
@@ -282,22 +281,26 @@
       var container = document.getElementById('daysContainer');
       var labels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
       labels.forEach(function (label, i) {
-        var details = document.createElement('details');
-        details.className = 'day';
-        if (i === 0) details.open = true;
+        var dayDiv = document.createElement('div');
+        dayDiv.className = 'day';
+        if (i === 0) dayDiv.classList.add('open');
+        dayDiv.dataset.dayIndex = String(i);
 
-        var summary = document.createElement('summary');
+        var toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'day-toggle';
         var titleSpan = document.createElement('span');
         titleSpan.textContent = label;
         var chev = document.createElement('span');
         chev.className = 'chev';
         chev.textContent = '›';
-        summary.appendChild(titleSpan);
-        summary.appendChild(chev);
-        details.appendChild(summary);
+        toggle.appendChild(titleSpan);
+        toggle.appendChild(chev);
+        dayDiv.appendChild(toggle);
 
         var bodyDiv = document.createElement('div');
         bodyDiv.className = 'day-body';
+        if (i !== 0) bodyDiv.classList.add('hidden');
 
         var lunchLabel = document.createElement('label');
         lunchLabel.textContent = 'Lunch';
@@ -317,10 +320,22 @@
         bodyDiv.appendChild(lunchArea);
         bodyDiv.appendChild(dinnerLabel);
         bodyDiv.appendChild(dinnerArea);
-        details.appendChild(bodyDiv);
+        dayDiv.appendChild(bodyDiv);
 
-        container.appendChild(details);
+        container.appendChild(dayDiv);
       });
+
+      container.addEventListener('click', onDayToggleClick);
+    }
+
+    function onDayToggleClick(e) {
+      var toggle = e.target.closest('.day-toggle');
+      if (!toggle) return;
+      var dayDiv = toggle.closest('.day');
+      var bodyDiv = dayDiv.querySelector('.day-body');
+      var willOpen = !dayDiv.classList.contains('open');
+      dayDiv.classList.toggle('open', willOpen);
+      bodyDiv.classList.toggle('hidden', !willOpen);
     }
 
     function wireEvents() {
@@ -503,6 +518,13 @@
       }
 
       var clientSelect = document.getElementById('clientSelect').value;
+      var confirmName = clientSelect === '__new__'
+        ? document.getElementById('newClientName').value.trim()
+        : (state.clients.find(function (c) { return c.id === clientSelect; }) || {}).name;
+      var confirmWeek = document.getElementById('weekNo').value;
+      var confirmed = window.confirm('Generate the PDF for ' + (confirmName || 'this client') + ' — Week ' + confirmWeek + '?');
+      if (!confirmed) return;
+
       var payload = {
         clientId: clientSelect === '__new__' ? '' : clientSelect,
         newClientName: clientSelect === '__new__' ? document.getElementById('newClientName').value : '',

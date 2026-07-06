@@ -32,14 +32,17 @@ format:
 1. **Cover** — title, week number, client name, start/end date, starting
    weight, goal, diet type, an optional highlight banner (e.g. "45 Minutes
    Fast Walk is Compulsion Every Day"), and the coach's name/contact.
-2. **Common Daily Plan** — the fixed daily routine (On Rising, Before
-   Exercise, After Exercise, Brunch, Snack, Bed Time) plus a hydration note.
-3. **Lunch Plan** — Day 1–7 lunch table.
-4. **Dinner Plan** — Day 1–7 dinner table, a dinner-timing note, and this
-   week's optional note if one was entered.
-5. **Diet Guidelines** — Do's/Don'ts and lifestyle tips. This content is the
-   same for every client, so it lives in `Code.gs` (`DOS_LIST`,
-   `DONTS_LIST`, `LIFESTYLE_TIPS`) rather than being re-typed every week.
+2. **Common Daily Plan** — the fixed daily routine (🌅 On Rising, 💪 Before
+   Exercise, 🥤 After Exercise, 🥗 Brunch, ☕ Snack, 🌙 Bed Time) plus a
+   hydration note.
+3. **Lunch Plan** — a table with the actual calendar date for each of the 7
+   days (e.g. "Tue, 08 Jul"), not "Day 1..Day 7".
+4. **Dinner Plan** — same dated table for dinner, a dinner-timing note, and
+   this week's optional note if one was entered.
+5. **Diet Guidelines** — Do's (green, ✅) and Don'ts (red, ❌), plus
+   lifestyle tips. This content is the same for every client, so it lives in
+   `Code.gs` (`DOS_LIST`, `DONTS_LIST`, `LIFESTYLE_TIPS`) rather than being
+   re-typed every week.
 6. **Weekly Progress Tracker** — a blank 8-week weigh-in grid for the client
    to fill in by hand, with the program's start date/weight/goal at the top.
 7. **Coach contact page** — dietician bio, referral note, and other

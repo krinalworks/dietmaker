@@ -82,6 +82,12 @@ const GOLD_TEXT = '#e3b968';
 const LIGHT_GREEN = '#eaf2ec';
 const LIGHT_GOLD = '#faf1de';
 const TEXT_MUTED = '#6b7280';
+const TABLE_BORDER = '#d8e0da';
+const ZEBRA_TINT = '#f4f8f5';
+const DO_BG = '#eaf7ee';
+const DO_TEXT = '#1e7e34';
+const DONT_BG = '#fdecea';
+const DONT_TEXT = '#c0392b';
 
 const SHEET_CLIENTS = 'Clients';
 const SHEET_PLANS = 'DietPlans';
@@ -109,8 +115,6 @@ const PLANS_HEADERS = [
 ];
 
 const FOOD_HEADERS = ['Category', 'Item', 'Notes'];
-
-const DAY_LABELS = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
 
 // ---------------------------------------------------------------------------
 // Web app entry point
@@ -653,12 +657,12 @@ function buildCommonDailyPage_(body, profile) {
   body.appendParagraph('');
 
   const items = [
-    ['On Rising', profile.onRising],
-    ['Before Exercise', profile.beforeExercise],
-    ['After Exercise', profile.afterExercise],
-    ['Brunch', profile.brunch],
-    ['Snack', profile.snack],
-    ['Bed Time', profile.bedTime]
+    ['🌅 On Rising', profile.onRising],
+    ['💪 Before Exercise', profile.beforeExercise],
+    ['🥤 After Exercise', profile.afterExercise],
+    ['🥗 Brunch', profile.brunch],
+    ['☕ Snack', profile.snack],
+    ['🌙 Bed Time', profile.bedTime]
   ].filter(function (row) { return row[1]; });
 
   if (items.length) {
@@ -670,30 +674,32 @@ function buildCommonDailyPage_(body, profile) {
       labelCell.setBackgroundColor(LIGHT_GREEN);
       labelCell.getChild(0).asParagraph().editAsText().setBold(true);
     }
+    zebraStripe_(table, 1, true);
+    finishDataTable_(table);
   } else {
     body.appendParagraph('No common daily items added for this client yet.').editAsText().setForegroundColor(TEXT_MUTED);
   }
 
   body.appendParagraph('');
-  appendNoteBox_(body, 'Daily Hydration Goal', CONFIG.HYDRATION_NOTE, LIGHT_GOLD);
+  appendNoteBox_(body, '💧 Daily Hydration Goal', CONFIG.HYDRATION_NOTE, LIGHT_GOLD);
 }
 
 function buildLunchPage_(body, plan, days) {
   appendSectionHeader_(body, 'LUNCH PLAN', CONFIG.LUNCH_TIME_LABEL + '   |   Week ' + displayWeekNo_(plan.weekNo) + '   |   ' + displayDate_(plan.startDate) + ' - ' + displayDate_(plan.endDate));
   body.appendParagraph('');
-  appendDayMealTable_(body, 'Lunch Meal', days, 'lunch');
+  appendDayMealTable_(body, 'Lunch Meal', days, 'lunch', plan.startDate);
 }
 
 function buildDinnerPage_(body, plan, days) {
   appendSectionHeader_(body, 'DINNER PLAN', CONFIG.DINNER_TIME_LABEL + '   |   Week ' + displayWeekNo_(plan.weekNo) + '   |   ' + displayDate_(plan.startDate) + ' - ' + displayDate_(plan.endDate));
   body.appendParagraph('');
-  appendDayMealTable_(body, 'Dinner Meal', days, 'dinner');
+  appendDayMealTable_(body, 'Dinner Meal', days, 'dinner', plan.startDate);
   body.appendParagraph('');
-  appendNoteBox_(body, 'Important', CONFIG.DINNER_NOTE, LIGHT_GOLD);
+  appendNoteBox_(body, '⚠️ Important', CONFIG.DINNER_NOTE, LIGHT_GOLD);
 
   if (plan.generalNotes) {
     body.appendParagraph('');
-    appendNoteBox_(body, "This Week's Note", plan.generalNotes, LIGHT_GREEN);
+    appendNoteBox_(body, "📝 This Week's Note", plan.generalNotes, LIGHT_GREEN);
   }
 }
 
@@ -705,8 +711,8 @@ function buildGuidelinesPage_(body) {
   const rows = [["DO'S", "DON'TS"]];
   for (let i = 0; i < maxLen; i++) {
     rows.push([
-      DOS_LIST[i] ? '✓  ' + DOS_LIST[i] : '',
-      DONTS_LIST[i] ? '✗  ' + DONTS_LIST[i] : ''
+      DOS_LIST[i] ? '✅  ' + DOS_LIST[i] : '',
+      DONTS_LIST[i] ? '❌  ' + DONTS_LIST[i] : ''
     ]);
   }
   const table = body.appendTable(rows);
@@ -718,6 +724,20 @@ function buildGuidelinesPage_(body) {
     t.setBold(true);
     t.setForegroundColor('#ffffff');
   }
+  for (let r = 1; r < table.getNumRows(); r++) {
+    const row = table.getRow(r);
+    const doText = row.getCell(0).getChild(0).asParagraph().editAsText();
+    if (doText.getText()) {
+      row.getCell(0).setBackgroundColor(DO_BG);
+      doText.setForegroundColor(DO_TEXT);
+    }
+    const dontText = row.getCell(1).getChild(0).asParagraph().editAsText();
+    if (dontText.getText()) {
+      row.getCell(1).setBackgroundColor(DONT_BG);
+      dontText.setForegroundColor(DONT_TEXT);
+    }
+  }
+  finishDataTable_(table);
 
   body.appendParagraph('');
   appendSectionHeader_(body, 'LIFESTYLE & WELLNESS TIPS', null);
@@ -730,6 +750,7 @@ function buildGuidelinesPage_(body) {
     t.setBold(true);
     t.setForegroundColor(DARK_GREEN);
   }
+  finishDataTable_(tipsTable);
 }
 
 function buildProgressTrackerPage_(body, profile) {
@@ -754,6 +775,8 @@ function buildProgressTrackerPage_(body, profile) {
   for (let r = 1; r < table.getNumRows(); r++) {
     table.getRow(r).getCell(0).setBackgroundColor(LIGHT_GREEN);
   }
+  zebraStripe_(table, 1, true);
+  finishDataTable_(table);
 
   body.appendParagraph('');
   appendQuoteBanner_(body, CONFIG.MOTIVATIONAL_QUOTE);
@@ -873,13 +896,15 @@ function appendLabelValueTable_(body, rows) {
     labelText.setBold(true);
     labelText.setForegroundColor(DARK_GREEN);
   }
+  finishDataTable_(table);
   return table;
 }
 
-function appendDayMealTable_(body, columnLabel, days, key) {
-  const rows = [['Day', columnLabel]];
+/** Meal table with the actual calendar date for each day, not "Day 1..7". */
+function appendDayMealTable_(body, columnLabel, days, key, startDate) {
+  const rows = [['Date', columnLabel]];
   days.forEach(function (d, i) {
-    rows.push([DAY_LABELS[i], d[key] || '-']);
+    rows.push([planDayLabel_(startDate, i), d[key] || '-']);
   });
   const table = body.appendTable(rows);
   styleHeaderRow_(table.getRow(0));
@@ -888,6 +913,8 @@ function appendDayMealTable_(body, columnLabel, days, key) {
     labelCell.setBackgroundColor(LIGHT_GREEN);
     labelCell.getChild(0).asParagraph().editAsText().setBold(true);
   }
+  zebraStripe_(table, 1, true);
+  finishDataTable_(table);
   return table;
 }
 
@@ -900,6 +927,31 @@ function styleHeaderRow_(row, fontSize) {
     t.setForegroundColor('#ffffff');
     if (fontSize) t.setFontSize(fontSize);
   }
+}
+
+/** Alternates background color on body rows for a less flat look. Optionally skips column 0 (already styled as the row label). */
+function zebraStripe_(table, startRow, skipFirstColumn) {
+  for (let r = startRow; r < table.getNumRows(); r++) {
+    const isEven = (r - startRow) % 2 === 0;
+    if (isEven) continue; // leave every other row at its existing (white) background
+    const row = table.getRow(r);
+    for (let c = skipFirstColumn ? 1 : 0; c < row.getNumCells(); c++) {
+      row.getCell(c).setBackgroundColor(ZEBRA_TINT);
+    }
+  }
+}
+
+/** Consistent soft border + cell padding for a data table (not banner tables). */
+function finishDataTable_(table) {
+  table.setBorderColor(TABLE_BORDER);
+  table.setBorderWidth(0.75);
+  for (let r = 0; r < table.getNumRows(); r++) {
+    const row = table.getRow(r);
+    for (let c = 0; c < row.getNumCells(); c++) {
+      row.getCell(c).setPaddingTop(6).setPaddingBottom(6).setPaddingLeft(8).setPaddingRight(8);
+    }
+  }
+  return table;
 }
 
 function appendNoteBox_(body, title, text, bg) {
@@ -950,6 +1002,16 @@ function displayDate_(dateStr) {
 function displayWeekNo_(weekNo) {
   const s = String(weekNo).trim();
   return /^\d$/.test(s) ? '0' + s : s;
+}
+
+/** e.g. "Tue, 08 Jul" for the given offset (0-6) from the plan's start date. Falls back to "Day N" if the start date is missing/unparseable. */
+function planDayLabel_(startDateStr, offset) {
+  const parts = String(startDateStr || '').split('-');
+  if (parts.length !== 3) return 'Day ' + (offset + 1);
+  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  if (isNaN(date.getTime())) return 'Day ' + (offset + 1);
+  date.setDate(date.getDate() + offset);
+  return Utilities.formatDate(date, CONFIG.TIMEZONE, 'EEE, dd MMM');
 }
 
 function sanitizeFileName_(name) {
