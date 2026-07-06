@@ -40,7 +40,7 @@ const CONFIG = {
   CREDENTIALS: 'Certified Nutritionist & Dietician',
   PHONE: '09724617765',
   EMAIL: 'Foram2206@gmail.com',
-  INSTAGRAM_HANDLE: '', // leave blank to omit from the PDF
+  INSTAGRAM_HANDLE: 'fitforam', // leave blank to omit from the PDF
   WEBSITE: '', // leave blank to omit from the PDF
   REFERRAL_TEXT: 'Share this plan with a friend. They receive 10% off their first plan. You receive 1 free follow-up session.',
   OTHER_PROGRAMS: [] // e.g. ['12-Week Transformation Program', 'Postpartum Nutrition Program']
@@ -261,7 +261,16 @@ function getInitialData() {
       return { category: String(row[fCatIdx] || ''), item: String(row[fItemIdx] || ''), notes: String(row[fNotesIdx] || '') };
     });
 
-  return { clients: clients, foodLibrary: foodLibrary };
+  return {
+    clients: clients,
+    foodLibrary: foodLibrary,
+    coach: {
+      name: CONFIG.DIETICIAN_NAME,
+      credentials: CONFIG.CREDENTIALS,
+      phone: CONFIG.PHONE,
+      instagramHandle: CONFIG.INSTAGRAM_HANDLE
+    }
+  };
 }
 
 // ---------------------------------------------------------------------------

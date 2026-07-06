@@ -100,7 +100,9 @@ README.md         This file
    - `HYDRATION_NOTE`, `DINNER_NOTE`, `MOTIVATIONAL_QUOTE` — static notes.
    - `DIETICIAN_NAME`, `CREDENTIALS`, `PHONE`, `EMAIL`, `INSTAGRAM_HANDLE`,
      `WEBSITE`, `REFERRAL_TEXT`, `OTHER_PROGRAMS` — coach bio/contact page.
-     Leave `INSTAGRAM_HANDLE`/`WEBSITE` blank to omit them entirely.
+     Leave `INSTAGRAM_HANDLE`/`WEBSITE` blank to omit them entirely. These
+     same values also power the coach card at the bottom of the phone app
+     (name, phone tap-to-call, Instagram link) — one place to edit both.
    - `DOS_LIST`, `DONTS_LIST`, `LIFESTYLE_TIPS` (just below `CONFIG`) — the
      Diet Guidelines page content.
 7. In the Apps Script editor, select the `initializeDatabase` function from

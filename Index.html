@@ -5,28 +5,36 @@
   <meta charset="utf-8">
   <style>
     :root {
-      --primary: #4a6fa5;
-      --primary-dark: #35507d;
-      --bg: #f5f6f8;
-      --card: #ffffff;
+      --primary: #2f6b4a;
+      --primary-dark: #1d3c2b;
+      --gold: #c99a3c;
+      --bg: #eef4ef;
+      --card: rgba(255, 255, 255, 0.55);
+      --card-border: rgba(255, 255, 255, 0.65);
       --text: #1f2430;
       --muted: #6b7280;
       --border: #dde1e7;
       --danger: #c0392b;
       --success: #1e7e34;
-      --radius: 12px;
+      --radius: 16px;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(47, 107, 74, 0.22), transparent 45%),
+        radial-gradient(circle at 90% 25%, rgba(201, 154, 60, 0.20), transparent 40%),
+        radial-gradient(circle at 20% 90%, rgba(201, 154, 60, 0.16), transparent 40%),
+        linear-gradient(160deg, #eaf3ec 0%, #f5f6f8 50%, #fdf3e0 100%);
+      background-attachment: fixed;
       color: var(--text);
       -webkit-tap-highlight-color: transparent;
     }
     .app { max-width: 640px; margin: 0 auto; padding: 16px 16px 96px; }
     .app-header { padding: 12px 4px 20px; }
-    .app-header h1 { font-size: 22px; margin: 0; }
+    .app-header h1 { font-size: 22px; margin: 0; color: var(--primary-dark); }
     .app-header p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
 
     .card {
@@ -34,7 +42,10 @@
       border-radius: var(--radius);
       padding: 16px;
       margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 8px 30px rgba(29, 60, 43, 0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
     .card h2 { font-size: 16px; margin: 0 0 12px; }
 
@@ -53,8 +64,10 @@
       font-size: 16px;
       padding: 12px;
       border-radius: 10px;
-      border: 1px solid var(--border);
-      background: #fff;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       color: var(--text);
       font-family: inherit;
     }
@@ -62,16 +75,20 @@
     select:focus, input:focus, textarea:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(74,111,165,0.15);
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 0 0 3px rgba(47, 107, 74, 0.15);
     }
 
     .hidden { display: none !important; }
 
     .day {
-      border: 1px solid var(--border);
+      border: 1px solid var(--card-border);
       border-radius: 10px;
       margin-bottom: 10px;
       overflow: hidden;
+      background: rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .day-toggle {
       -webkit-appearance: none;
@@ -84,7 +101,7 @@
       font-size: 16px;
       font-family: inherit;
       color: var(--text);
-      background: #f8f9fb;
+      background: rgba(255, 255, 255, 0.4);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -108,9 +125,18 @@
       border: none;
       cursor: pointer;
     }
-    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.primary { background: var(--primary); color: #fff; box-shadow: 0 6px 20px rgba(47, 107, 74, 0.35); }
     .btn.primary:active { background: var(--primary-dark); }
-    .btn.secondary { background: #e9ebf0; color: var(--text); flex: 0 0 auto; padding-left: 20px; padding-right: 20px; }
+    .btn.secondary {
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      flex: 0 0 auto;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
 
     .banner {
       border-radius: 10px;
@@ -125,7 +151,9 @@
 
     .overlay {
       position: fixed; inset: 0;
-      background: rgba(255,255,255,0.85);
+      background: rgba(238, 244, 239, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       z-index: 50;
@@ -153,6 +181,30 @@
     #recentPlansList a { color: var(--primary); font-weight: 600; text-decoration: none; }
 
     .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    .coach-footer {
+      text-align: center;
+      padding: 18px 16px;
+      margin-top: 8px;
+    }
+    .coach-footer .coach-name { font-size: 16px; font-weight: 700; color: var(--primary-dark); margin: 0; }
+    .coach-footer .coach-cred { font-size: 12px; color: var(--muted); margin: 2px 0 12px; }
+    .coach-footer .coach-links { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .coach-footer .coach-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--card-border);
+      color: var(--primary-dark);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -261,6 +313,15 @@
       <h2>Recent Plans For This Client</h2>
       <ul id="recentPlansList"></ul>
     </section>
+
+    <div class="coach-footer hidden" id="coachFooter">
+      <p class="coach-name" id="coachName"></p>
+      <p class="coach-cred" id="coachCred"></p>
+      <div class="coach-links">
+        <a id="coachPhone" href="#">📞 Call</a>
+        <a id="coachInsta" href="#" target="_blank" rel="noopener">📷 Instagram</a>
+      </div>
+    </div>
   </div>
 
   <div id="loadingOverlay" class="overlay hidden">
@@ -350,11 +411,38 @@
         .withSuccessHandler(function (data) {
           state.clients = data.clients || [];
           populateClientDropdown();
+          renderCoachFooter(data.coach);
         })
         .withFailureHandler(function (err) {
           showBanner('error', 'Could not load data: ' + errMessage(err));
         })
         .getInitialData();
+    }
+
+    function renderCoachFooter(coach) {
+      if (!coach || !coach.name) return;
+      document.getElementById('coachName').textContent = coach.name;
+      document.getElementById('coachCred').textContent = coach.credentials || '';
+
+      var phoneLink = document.getElementById('coachPhone');
+      if (coach.phone) {
+        phoneLink.href = 'tel:' + coach.phone.replace(/\s+/g, '');
+        phoneLink.textContent = '📞 ' + coach.phone;
+        phoneLink.classList.remove('hidden');
+      } else {
+        phoneLink.classList.add('hidden');
+      }
+
+      var instaLink = document.getElementById('coachInsta');
+      if (coach.instagramHandle) {
+        instaLink.href = 'https://instagram.com/' + coach.instagramHandle;
+        instaLink.textContent = '📷 @' + coach.instagramHandle;
+        instaLink.classList.remove('hidden');
+      } else {
+        instaLink.classList.add('hidden');
+      }
+
+      document.getElementById('coachFooter').classList.remove('hidden');
     }
 
     function populateClientDropdown() {
