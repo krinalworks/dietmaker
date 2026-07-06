@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --primary: #4a6fa5;
+      --primary-dark: #35507d;
+      --bg: #f5f6f8;
+      --card: #ffffff;
+      --text: #1f2430;
+      --muted: #6b7280;
+      --border: #dde1e7;
+      --danger: #c0392b;
+      --success: #1e7e34;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .app { max-width: 640px; margin: 0 auto; padding: 16px 16px 96px; }
+    .app-header { padding: 12px 4px 20px; }
+    .app-header h1 { font-size: 22px; margin: 0; }
+    .app-header p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card h2 { font-size: 16px; margin: 0 0 12px; }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      margin-top: 14px;
+      color: var(--text);
+    }
+    label:first-of-type { margin-top: 0; }
+
+    select, input, textarea {
+      width: 100%;
+      font-size: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 64px; }
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(74,111,165,0.15);
+    }
+
+    .hidden { display: none !important; }
+
+    details.day {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    details.day summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      font-weight: 600;
+      background: #f8f9fb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    details.day summary::-webkit-details-marker { display: none; }
+    details.day summary .chev { color: var(--muted); transition: transform 0.15s; }
+    details.day[open] summary .chev { transform: rotate(90deg); }
+    details.day .day-body { padding: 14px 16px 16px; }
+    details.day summary .filled-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--primary);
+      display: inline-block; margin-left: 8px;
+    }
+
+    .actions {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      gap: 10px;
+      padding: 12px 0 4px;
+      background: linear-gradient(to top, var(--bg) 70%, transparent);
+    }
+    .btn {
+      flex: 1;
+      padding: 15px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.primary:active { background: var(--primary-dark); }
+    .btn.secondary { background: #e9ebf0; color: var(--text); flex: 0 0 auto; padding-left: 20px; padding-right: 20px; }
+
+    .banner {
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .banner.error { background: #fdecea; color: var(--danger); border: 1px solid #f5c6c1; }
+    .banner.success { background: #e9f7ec; color: var(--success); border: 1px solid #bfe6c8; }
+    .banner a { color: inherit; font-weight: 700; }
+
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,0.85);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 50;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 4px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #recentPlansList { list-style: none; padding: 0; margin: 0; }
+    #recentPlansList li {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    #recentPlansList li:last-child { border-bottom: none; }
+    #recentPlansList a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="app-header">
+      <h1>Diet Plan Generator</h1>
+      <p>Fill in the plan and tap Generate PDF.</p>
+    </div>
+
+    <div id="banner" class="banner hidden"></div>
+
+    <form id="planForm">
+      <section class="card">
+        <h2>Client</h2>
+        <label for="clientSelect">Select Client</label>
+        <select id="clientSelect">
+          <option value="">Loading clients…</option>
+        </select>
+
+        <div id="newClientFields" class="hidden">
+          <label for="newClientName">New Client Name</label>
+          <input id="newClientName" type="text" placeholder="Full name">
+
+          <label for="newClientAge">Age</label>
+          <input id="newClientAge" type="number" inputmode="numeric" min="0" placeholder="Optional">
+
+          <label for="newClientPhone">Phone</label>
+          <input id="newClientPhone" type="tel" placeholder="Optional">
+
+          <label for="newClientNotes">Notes</label>
+          <textarea id="newClientNotes" rows="2" placeholder="Allergies, preferences, etc. (optional)"></textarea>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Plan Details</h2>
+        <label for="weekNo">Week Number</label>
+        <input id="weekNo" type="number" inputmode="numeric" min="1" placeholder="e.g. 1">
+
+        <label for="startDate">Start Date</label>
+        <input id="startDate" type="date">
+
+        <label for="endDate">End Date</label>
+        <input id="endDate" type="date">
+        <p class="hint">End date auto-fills to 6 days after the start date — you can still change it.</p>
+      </section>
+
+      <section class="card">
+        <h2>Meals — Day 1 to Day 7</h2>
+        <div id="daysContainer"></div>
+      </section>
+
+      <section class="card">
+        <h2>General Notes</h2>
+        <textarea id="generalNotes" rows="3" placeholder="e.g. Drink 3 litres of water daily (optional)"></textarea>
+      </section>
+
+      <div class="actions">
+        <button type="button" id="clearBtn" class="btn secondary">Clear</button>
+        <button type="submit" id="generateBtn" class="btn primary">Generate PDF</button>
+      </div>
+    </form>
+
+    <section class="card hidden" id="recentPlansSection">
+      <h2>Recent Plans For This Client</h2>
+      <ul id="recentPlansList"></ul>
+    </section>
+  </div>
+
+  <div id="loadingOverlay" class="overlay hidden">
+    <div class="spinner"></div>
+    <p id="loadingText">Generating PDF…</p>
+  </div>
+
+  <script>
+    var state = { clients: [] };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      buildDaysUI();
+      wireEvents();
+      loadInitialData();
+    });
+
+    function buildDaysUI() {
+      var container = document.getElementById('daysContainer');
+      var labels = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+      labels.forEach(function (label, i) {
+        var details = document.createElement('details');
+        details.className = 'day';
+        if (i === 0) details.open = true;
+
+        var summary = document.createElement('summary');
+        var titleSpan = document.createElement('span');
+        titleSpan.textContent = label;
+        var chev = document.createElement('span');
+        chev.className = 'chev';
+        chev.textContent = '›';
+        summary.appendChild(titleSpan);
+        summary.appendChild(chev);
+        details.appendChild(summary);
+
+        var bodyDiv = document.createElement('div');
+        bodyDiv.className = 'day-body';
+
+        var lunchLabel = document.createElement('label');
+        lunchLabel.textContent = 'Lunch';
+        var lunchArea = document.createElement('textarea');
+        lunchArea.id = 'day' + i + 'Lunch';
+        lunchArea.rows = 2;
+        lunchArea.placeholder = 'e.g. Dal, rice, salad';
+
+        var dinnerLabel = document.createElement('label');
+        dinnerLabel.textContent = 'Dinner';
+        var dinnerArea = document.createElement('textarea');
+        dinnerArea.id = 'day' + i + 'Dinner';
+        dinnerArea.rows = 2;
+        dinnerArea.placeholder = 'e.g. Soup and roti';
+
+        bodyDiv.appendChild(lunchLabel);
+        bodyDiv.appendChild(lunchArea);
+        bodyDiv.appendChild(dinnerLabel);
+        bodyDiv.appendChild(dinnerArea);
+        details.appendChild(bodyDiv);
+
+        container.appendChild(details);
+      });
+    }
+
+    function wireEvents() {
+      document.getElementById('clientSelect').addEventListener('change', onClientChange);
+      document.getElementById('startDate').addEventListener('change', onStartDateChange);
+      document.getElementById('planForm').addEventListener('submit', onSubmit);
+      document.getElementById('clearBtn').addEventListener('click', onClear);
+    }
+
+    function loadInitialData() {
+      google.script.run
+        .withSuccessHandler(function (data) {
+          state.clients = data.clients || [];
+          populateClientDropdown();
+        })
+        .withFailureHandler(function (err) {
+          showBanner('error', 'Could not load data: ' + errMessage(err));
+        })
+        .getInitialData();
+    }
+
+    function populateClientDropdown() {
+      var select = document.getElementById('clientSelect');
+      select.innerHTML = '';
+
+      var placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Select a client';
+      select.appendChild(placeholder);
+
+      state.clients
+        .slice()
+        .sort(function (a, b) { return a.name.localeCompare(b.name); })
+        .forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          select.appendChild(opt);
+        });
+
+      var addNew = document.createElement('option');
+      addNew.value = '__new__';
+      addNew.textContent = '+ Add New Client';
+      select.appendChild(addNew);
+    }
+
+    function onClientChange() {
+      var value = document.getElementById('clientSelect').value;
+      var newFields = document.getElementById('newClientFields');
+      var recentSection = document.getElementById('recentPlansSection');
+
+      if (value === '__new__') {
+        newFields.classList.remove('hidden');
+        recentSection.classList.add('hidden');
+      } else {
+        newFields.classList.add('hidden');
+        if (value) {
+          loadRecentPlans(value);
+        } else {
+          recentSection.classList.add('hidden');
+        }
+      }
+    }
+
+    function loadRecentPlans(clientId) {
+      google.script.run
+        .withSuccessHandler(function (plans) {
+          renderRecentPlans(plans || []);
+        })
+        .withFailureHandler(function () { /* non-critical, ignore */ })
+        .getRecentPlans(clientId);
+    }
+
+    function renderRecentPlans(plans) {
+      var section = document.getElementById('recentPlansSection');
+      var list = document.getElementById('recentPlansList');
+      list.innerHTML = '';
+
+      if (!plans.length) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      plans.forEach(function (p) {
+        var li = document.createElement('li');
+        var label = document.createElement('span');
+        label.textContent = 'Week ' + p.weekNo + ' (' + p.startDate + ' to ' + p.endDate + ')';
+        var link = document.createElement('a');
+        link.href = p.pdfUrl;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'Open PDF';
+        li.appendChild(label);
+        li.appendChild(link);
+        list.appendChild(li);
+      });
+
+      section.classList.remove('hidden');
+    }
+
+    function onStartDateChange() {
+      var startVal = document.getElementById('startDate').value;
+      if (!startVal) return;
+      var start = new Date(startVal + 'T00:00:00');
+      var end = new Date(start.getTime());
+      end.setDate(end.getDate() + 6);
+      document.getElementById('endDate').value = toIsoDate(end);
+    }
+
+    function toIsoDate(date) {
+      var y = date.getFullYear();
+      var m = String(date.getMonth() + 1).padStart(2, '0');
+      var d = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    function collectDays() {
+      var days = [];
+      for (var i = 0; i < 7; i++) {
+        days.push({
+          lunch: document.getElementById('day' + i + 'Lunch').value,
+          dinner: document.getElementById('day' + i + 'Dinner').value
+        });
+      }
+      return days;
+    }
+
+    function clientSideValidate() {
+      var clientSelect = document.getElementById('clientSelect').value;
+      if (!clientSelect) {
+        return 'Select a client or add a new client.';
+      }
+      if (clientSelect === '__new__' && !document.getElementById('newClientName').value.trim()) {
+        return 'Enter a name for the new client.';
+      }
+      if (!document.getElementById('weekNo').value) {
+        return 'Week number is required.';
+      }
+      if (!document.getElementById('startDate').value) {
+        return 'Start date is required.';
+      }
+      if (!document.getElementById('endDate').value) {
+        return 'End date is required.';
+      }
+      var days = collectDays();
+      var hasMeal = days.some(function (d) { return d.lunch.trim() || d.dinner.trim(); });
+      if (!hasMeal) {
+        return 'Add at least one lunch or dinner entry.';
+      }
+      return null;
+    }
+
+    function onSubmit(e) {
+      e.preventDefault();
+      hideBanner();
+
+      var validationError = clientSideValidate();
+      if (validationError) {
+        showBanner('error', validationError);
+        return;
+      }
+
+      var clientSelect = document.getElementById('clientSelect').value;
+      var payload = {
+        clientId: clientSelect === '__new__' ? '' : clientSelect,
+        newClientName: clientSelect === '__new__' ? document.getElementById('newClientName').value : '',
+        newClientAge: clientSelect === '__new__' ? document.getElementById('newClientAge').value : '',
+        newClientPhone: clientSelect === '__new__' ? document.getElementById('newClientPhone').value : '',
+        newClientNotes: clientSelect === '__new__' ? document.getElementById('newClientNotes').value : '',
+        weekNo: document.getElementById('weekNo').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        days: collectDays(),
+        generalNotes: document.getElementById('generalNotes').value
+      };
+
+      setLoading(true, 'Generating PDF…');
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          setLoading(false);
+          if (result && result.ok) {
+            onGenerateSuccess(result);
+          } else {
+            showBanner('error', (result && result.error) || 'Something went wrong. Please try again.');
+          }
+        })
+        .withFailureHandler(function (err) {
+          setLoading(false);
+          showBanner('error', errMessage(err));
+        })
+        .savePlanAndGeneratePdf(payload);
+    }
+
+    function onGenerateSuccess(result) {
+      showBanner('success',
+        'PDF generated for ' + result.client.name + '. ' +
+        '<a href="' + result.pdfUrl + '" target="_blank" rel="noopener">Open PDF</a>'
+      );
+
+      if (result.client && result.client.id) {
+        var alreadyKnown = state.clients.some(function (c) { return c.id === result.client.id; });
+        if (!alreadyKnown) {
+          state.clients.push({ id: result.client.id, name: result.client.name });
+        }
+        populateClientDropdown();
+        document.getElementById('clientSelect').value = result.client.id;
+        document.getElementById('newClientFields').classList.add('hidden');
+        loadRecentPlans(result.client.id);
+      }
+    }
+
+    function onClear() {
+      document.getElementById('planForm').reset();
+      document.getElementById('newClientFields').classList.add('hidden');
+      document.getElementById('recentPlansSection').classList.add('hidden');
+      for (var i = 0; i < 7; i++) {
+        document.getElementById('day' + i + 'Lunch').value = '';
+        document.getElementById('day' + i + 'Dinner').value = '';
+      }
+      hideBanner();
+    }
+
+    function setLoading(isLoading, text) {
+      var overlay = document.getElementById('loadingOverlay');
+      var generateBtn = document.getElementById('generateBtn');
+      if (isLoading) {
+        document.getElementById('loadingText').textContent = text || 'Working…';
+        overlay.classList.remove('hidden');
+        generateBtn.disabled = true;
+      } else {
+        overlay.classList.add('hidden');
+        generateBtn.disabled = false;
+      }
+    }
+
+    function showBanner(type, html) {
+      var banner = document.getElementById('banner');
+      banner.className = 'banner ' + type;
+      banner.innerHTML = html;
+      banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function hideBanner() {
+      var banner = document.getElementById('banner');
+      banner.className = 'banner hidden';
+      banner.innerHTML = '';
+    }
+
+    function errMessage(err) {
+      return (err && err.message) ? err.message : String(err);
+    }
+  </script>
+</body>
+</html>
