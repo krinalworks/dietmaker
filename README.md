@@ -7,6 +7,12 @@ The PDF layout matches an existing branded diet plan format (cover page,
 common daily plan, lunch/dinner tables, diet guidelines, weekly progress
 tracker, coach contact page) rather than a generic template.
 
+**This document describes the Google Apps Script version** (free, hosted
+on `script.google.com`). A second version that runs on your own domain via
+Hostinger shared hosting (PHP + MySQL) instead of Google's infrastructure
+also exists in [`hostinger/`](hostinger/README.md) — same features and PDF
+layout, different hosting. Pick one; you don't need both.
+
 ## What This App Does
 
 1. Open one link on your phone.

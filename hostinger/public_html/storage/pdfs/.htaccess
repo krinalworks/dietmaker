@@ -1,0 +1,9 @@
+# Generated PDFs are named with a random, unguessable ID and are meant to
+# be opened directly by clients via a shared WhatsApp link — they should
+# NOT require the same login as the rest of the app. This overrides any
+# directory password-protection applied to the parent app folder via
+# hPanel, for this folder only.
+<IfModule mod_authz_core.c>
+  Require all granted
+</IfModule>
+Satisfy Any

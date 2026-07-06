@@ -1,0 +1,15 @@
+# Never list directory contents (e.g. storage/pdfs/) in a browser.
+Options -Indexes
+
+# These files only define functions/config and are meant to be `require`d by
+# index.php / api/*.php — never requested directly. Denying direct access is
+# defense-in-depth (harmless either way since they produce no output), not a
+# secret leak fix.
+<FilesMatch "^(config|helpers|db|pdf_builder)\.php$">
+  Require all denied
+</FilesMatch>
+
+# Never serve the schema file or composer metadata over the web.
+<FilesMatch "\.(sql|lock)$">
+  Require all denied
+</FilesMatch>

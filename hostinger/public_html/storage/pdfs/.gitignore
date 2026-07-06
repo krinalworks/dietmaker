@@ -1,0 +1,2 @@
+# Generated PDFs live here at runtime — never commit real client PDFs.
+*.pdf

@@ -1,0 +1,7 @@
+# Dompdf auto-generates font metric caches here on first use, keyed by the
+# server's absolute file path — they're not portable between machines, so
+# they shouldn't be committed. Only NotoEmoji-Regular.ttf (the actual font
+# file) is tracked.
+*.json
+*.ufm
+noto_emoji_normal_*
